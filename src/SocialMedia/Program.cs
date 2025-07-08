@@ -1,14 +1,21 @@
-using Microsoft.EntityFrameworkCore;
-using SocialMedia.Infrastructure.Persistence.Context;
+using Scalar.AspNetCore;
+using SocialMedia.Bootstraper;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<SocialMediaDbContext>(configure =>
-{
-    configure.UseSqlServer(builder.Configuration.GetConnectionString(SocialMediaDbContext.DefaultConnectionStringName));
-});
+builder.RegisterMSSSQL();
+
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+
+app.MapGet("/" , () => { });
 
 app.Run();
 
