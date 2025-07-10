@@ -13,6 +13,19 @@
         public User Following { get; private set; } = null!;
 
         public DateTime CreatedOn { get; private set; }
+
+
+        private Follow(long followerId , long followingId)
+        {
+            FollowerId = followerId;    
+            FollowingId = followingId;
+            CreatedOn = DateTime.Now;
+        }
+
+        public static Follow Create(long followerId, long followingId)
+        {
+            return new Follow(followerId, followingId);
+        }
     }
 
 }

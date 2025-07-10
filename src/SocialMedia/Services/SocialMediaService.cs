@@ -1,73 +1,29 @@
-﻿using Neo4j.Driver;
-using SocialMedia.Domain.Entities;
+﻿using SocialMedia.Domain.Entities;
+using SocialMedia.Infrastructure.Persistence.Context;
 
-namespace SocialMedia.Services
+namespace SocialMedia.Services;
+
+public class SocialMediaService(SocialMediaDbContext dbContext , GraphService graphService)
 {
-    public class SocialMediaService(IDriver driver)
+    private readonly SocialMediaDbContext _dbContext = dbContext;
+    private readonly GraphService _graphService = graphService;    
+
+    public async Task Follow(long followerId , long followingId, CancellationToken cancellationToken)
     {
-        private readonly IDriver _driver = driver;
+        // add to sql database
 
-        public async Task CreateUser(string Username)
-        {
-            var query = @"
-                MERGE(u: User { username: $username })
-             ";
+        var newFollow = Domain.Entities.Follow.Create(followerId, followingId);
+        _dbContext.Follows.Add(newFollow);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
-            await using var session = _driver.AsyncSession();
-            await session.RunAsync(query, new
-            {
-                username = Username,
-            });
-        }
+        // add to neo4j database
+
+        await _graphService.Follow(newFollow.FollowerId, newFollow.FollowingId);
+    }
 
 
-
-        public async Task Follow(string currentUsername , string targetUsername)
-        {
-            
-            var query = @"
-                MATCH (a:User { username: $currentUsername })
-                MATCH (b:User { username: $targetUsername })
-                MERGE (a)-[:FOLLOWS]->(b)
-            ";
-
-
-            await using var session = _driver.AsyncSession();
-            await session.RunAsync(query, new
-            {
-                currentUsername,
-                targetUsername
-            });
-        }
-
-
-        public async Task<IEnumerable<string>> SuggestedUsers(string Username)
-        {
-            var query = @"
-                    MATCH (me:User { username: $username })-[:FOLLOWS]->(:User)-[:FOLLOWS]->(suggested:User)
-                    WHERE NOT (me)-[:FOLLOWS]->(suggested) AND me <> suggested
-                    RETURN DISTINCT suggested.username AS username
-                    LIMIT 10
-                ";
-
-            var suggestedUsernames = new List<string>();
-
-            await using var session = _driver.AsyncSession();
-            var result = await session.RunAsync(query, new
-            {
-                username = Username
-            });
-
-            var records = await result.ToListAsync();
-
-            foreach (var record in records)
-            {
-                suggestedUsernames.Add(record["username"].As<string>());
-            }
-
-            return suggestedUsernames;
-
-        }
-
+    public async Task<IEnumerable<string>> SuggestedUsers(long currentUserId, CancellationToken cancellationToken)
+    {
+       return  await _graphService.SuggestedUsers(currentUserId);
     }
 }

@@ -33,7 +33,17 @@ namespace SocialMedia.Bootstraper
 
         public static void RegisterIoc(this WebApplicationBuilder builder)
         {
-            builder.Services.AddScoped<SocialMediaService>();
+
+            builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<TokenService>();
+            builder.Services.AddScoped<GraphService>();
+        }
+
+
+        public static void RegisterCommon(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddAuthorization();
+            builder.Services.AddOpenApi();
         }
 
 
