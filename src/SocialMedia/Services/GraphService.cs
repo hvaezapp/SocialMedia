@@ -39,6 +39,24 @@ public class GraphService(IDriver driver)
     }
 
 
+    public async Task Unfollow(long followerId, long followingId)
+    {
+        var query = @"
+            MATCH (a:User { id: $followerId })-[r:FOLLOWS]->(b:User { id: $followingId })
+            DELETE r
+        ";
+
+        await using var session = _driver.AsyncSession();
+        await session.RunAsync(query, new
+        {
+            followerId,
+            followingId
+        });
+    }
+
+
+
+
     public async Task<IEnumerable<string>> SuggestedUsers(long userId)
     {
         var query = @"

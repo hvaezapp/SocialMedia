@@ -60,6 +60,20 @@ app.MapPost("/follow/{targetUserid}", async (SocialMediaService socialMediaServi
 
 
 
+// Unfollow target user by id
+app.MapPost("/Unfollow/{targetUserid}", async (SocialMediaService socialMediaService,
+                                              HttpContext context,
+                                              long targetUserid,
+                                              CancellationToken cancellationToken) =>
+{
+    var currentUserId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+    await socialMediaService.Unfollow(long.Parse(currentUserId), targetUserid, cancellationToken);
+
+}).RequireAuthorization();
+
+
+
+
 // suggest user to loged in user to follow
 app.MapGet("/suggested-users", async (SocialMediaService socialMediaService,
                                       HttpContext context,
@@ -69,6 +83,8 @@ app.MapGet("/suggested-users", async (SocialMediaService socialMediaService,
     return Results.Ok(await socialMediaService.SuggestedUsers(long.Parse(currentUserId) , cancellationToken));
 
 }).RequireAuthorization();
+
+
 
 
 app.UseHttpsRedirection();

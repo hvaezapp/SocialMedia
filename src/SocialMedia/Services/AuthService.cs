@@ -43,7 +43,7 @@ public class AuthService(SocialMediaDbContext dbContext, GraphService socialMedi
                                           cancellationToken);
 
         if (user is null)
-            throw new Exception("Username or Password Invalid.");
+            throw new ArgumentNullException(nameof(user) ,  "Username or Password Invalid.");
 
 
         // set claims and generate jwt token

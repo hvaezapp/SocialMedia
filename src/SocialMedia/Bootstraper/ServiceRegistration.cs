@@ -37,6 +37,7 @@ namespace SocialMedia.Bootstraper
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<TokenService>();
             builder.Services.AddScoped<GraphService>();
+            builder.Services.AddScoped<SocialMediaService>();
         }
 
 
