@@ -57,12 +57,12 @@ public class GraphService(IDriver driver)
 
 
 
-    public async Task<IEnumerable<string>> SuggestedUsers(long userId)
+    public async Task<IEnumerable<string>> SuggestedUsers(long currentUserId)
     {
         var query = @"
                     MATCH (me:User { id: $userId })-[:FOLLOWS]->(:User)-[:FOLLOWS]->(suggested:User)
                     WHERE NOT (me)-[:FOLLOWS]->(suggested) AND me <> suggested
-                    RETURN DISTINCT suggested.username AS username
+                    RETURN DISTINCT suggested.id AS id
                     LIMIT 20
                 ";
 
@@ -71,7 +71,7 @@ public class GraphService(IDriver driver)
         await using var session = _driver.AsyncSession();
         var result = await session.RunAsync(query, new
         {
-            userId
+            userId = currentUserId
         });
 
         var records = await result.ToListAsync();
