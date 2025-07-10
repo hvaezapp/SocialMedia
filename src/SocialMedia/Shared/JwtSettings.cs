@@ -1,4 +1,4 @@
-﻿namespace SocialMedia;
+﻿namespace SocialMedia.Shared;
 
 public class JwtSettings
 {

@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
-using SocialMedia;
 using SocialMedia.Bootstraper;
+using SocialMedia.Domain.Entities;
 using SocialMedia.Dtos.Auth;
 using SocialMedia.Infrastructure.Persistence.Context;
 using SocialMedia.Services;
+using SocialMedia.Shared;
+using SocialMedia.Shared.Utility;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -34,21 +36,44 @@ app.UseAuthorization();
 
 
 
-app.MapPost("/register", (RegisterRequestDto registerRequestDto) =>
+app.MapPost("/register", async (RegisterRequestDto registerRequestDto , 
+                                SocialMediaDbContext dbContext,
+                                SocialMediaService socialMediaService,
+                                CancellationToken cancellationToken) =>
 {
+
+    // check username is exsist
+    var userIsExist = await dbContext.Users.AnyAsync(a => a.Username == registerRequestDto.Username , cancellationToken);
+    if (!userIsExist)
+        throw new Exception("Current Username is exist try another username.");
+
     // register user
-    
+
+    // 1- add to sql database
+    var newUser = User.Create(registerRequestDto.Fullname, 
+                             registerRequestDto.Username ,
+                             PasswordHelper.HashPassword(registerRequestDto.Password));
+
+    dbContext.Users.Add(newUser);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    // 2- add user to neo4j database - create node for this user
+    await socialMediaService.CreateUser(newUser.Username);
 });
 
 
 app.MapPost("/login", async (LoginRequestDto loginRequestDto,
                       SocialMediaDbContext dbContext,
-                      IConfiguration configuration) =>
+                      IConfiguration configuration,
+                      CancellationToken cancellationToken) =>
 {
 
     #region check UserExistence
     // check username and password
-    var userIsExist = await dbContext.Users.AnyAsync(a => a.Username == loginRequestDto.Username && a.PasswordHash == loginRequestDto.Password);
+    var userIsExist = await dbContext.Users
+                                     .AnyAsync(a => a.Username == loginRequestDto.Username &&
+                                      a.PasswordHash == PasswordHelper.HashPassword(loginRequestDto.Password), 
+                                      cancellationToken);
     if (!userIsExist)
         throw new Exception("Username or Password Invalid.");
     #endregion
@@ -83,14 +108,6 @@ app.MapPost("/login", async (LoginRequestDto loginRequestDto,
     return Results.Ok(new { token = jwt });
 
 });
-
-
-
-app.MapPost("/create-user/{username}", async (SocialMediaService socialMediaService, string username) =>
-{
-    await socialMediaService.CreateUser(username);
-
-}).RequireAuthorization();
 
 
 app.MapPost("/follow/{currentUsername}/{targetUsername}", async (

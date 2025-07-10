@@ -1,4 +1,5 @@
-﻿namespace SocialMedia.Domain.Entities
+﻿
+namespace SocialMedia.Domain.Entities
 {
     public class User
     {
@@ -13,5 +14,18 @@
         public ICollection<Follow> Followers { get; private set; } = [];
         public ICollection<Follow> Following { get; private set; } = [];
 
+
+        private User(string fullname, string username, string passwordHash)
+        {
+            Fullname = fullname;
+            Username = username;
+            PasswordHash = passwordHash;
+        }
+
+
+        internal static User Create(string fullname, string username, string passwordHash)
+        {
+            return new User(fullname , username , passwordHash);
+        }
     }
 }

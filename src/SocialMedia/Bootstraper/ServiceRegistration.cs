@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Neo4j.Driver;
 using SocialMedia.Infrastructure.Persistence.Context;
 using SocialMedia.Services;
+using SocialMedia.Shared;
 using System.Text;
 
 namespace SocialMedia.Bootstraper
